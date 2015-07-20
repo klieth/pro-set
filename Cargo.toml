@@ -1,0 +1,18 @@
+[package]
+name = "proset"
+version = "0.1.0"
+authors = ["Kai Lieth <dubokk15@gmail.com>"]
+
+[dependencies]
+fern = "*"
+hyper = "*"
+iron = "*"
+log = "*"
+rand = "*"
+router = "*"
+rustc-serialize = "*"
+time = "*"
+
+[dependencies.persistent]
+git = "https://github.com/klieth/persistent" 
+rev = "8c7aab8669434198f411c9ae9a7874babdd717b9"

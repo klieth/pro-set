@@ -1,0 +1,269 @@
+<html>
+  <head>
+    <title>Projective Set</title>
+  </head>
+  <body onload="start()">
+    <canvas id="game" width="800" height="600">
+      Your browser doesn't support this game.
+    </canvas>
+    <button onclick="newGame()">New Game</button>
+    <button onclick="submit()">Submit</button>
+    <script>
+
+var ctx = null;
+var dirty = true;
+var statusMessage = "";
+var cardData = [];
+var cardSize = {
+  width: 80,
+  height: 120,
+};
+var cardPos = [
+  {x: 290, y: 60},
+  {x: 430, y: 60},
+  {x: 220, y: 240},
+  {x: 360, y: 240},
+  {x: 500, y: 240},
+  {x: 290, y: 420},
+  {x: 430, y: 420},
+];
+var colors = {
+  r: { c: "#FF0000", x:  9, y:  8},
+  o: { c: "#FFBF00", x: 46, y:  8},
+  y: { c: "#FFE135", x:  9, y: 44},
+  g: { c: "#00FF00", x: 46, y: 44},
+  b: { c: "#0000FF", x:  9, y: 80},
+  v: { c: "#8A2BE2", x: 46, y: 80},
+  hover:  { c: "#D3212D" },
+  select: { c: "#AAAAAA" },
+  unselect: { c: "#FFFFFF" },
+};
+
+function start() {
+  var canvas = document.getElementById('game');
+  ctx = canvas.getContext('2d');
+  if (ctx) {
+    setupMouse(canvas);
+    getCards();
+  } else {
+    alert("Couldn't get the drawing context");
+  }
+  pollUpdates();
+}
+
+function pollUpdates() {
+  console.log("starting to poll...");
+  get_info("/update", function(res) {
+    if (res.update) {
+      displayStatus("Set found! Updating...", 3);
+      getCards();
+    } else {
+      console.log("nothing to update");
+      console.log(res);
+    }
+    console.log("finished updating!");
+    return pollUpdates();
+  });
+}
+
+function newGame() {
+  get_info("/new", function(result) {
+    if (result.ok) {
+      getCards();
+    } else {
+      alert("Creating new game failed");
+    }
+  });
+}
+
+function submit() {
+  var cards = [];
+  cardData.forEach(function (card) {
+    if (card.selected) {
+      dirty = true;
+      card.selected = false;
+      cards.push(card.n);
+    }
+  });
+  render();
+  console.log("sending", cards);
+  post_info("/submit", cards, function(result) {
+    if (!result.ok) {
+      console.log("Error checking set");
+      console.log(result.msg);
+    }
+    if (result.success) {
+      displayStatus("correct set", 5);
+      getCards();
+    } else {
+      displayStatus("not a set!",3);
+      console.log("Incorrect set");
+      console.log(result.msg);
+    }
+  });
+}
+
+function setupMouse(canvas) {
+  var getMousePos = function(evt) {
+    var rect = canvas.getBoundingClientRect();
+    return {
+      x: evt.clientX - rect.left,
+      y: evt.clientY - rect.top
+    }
+  }
+
+  canvas.addEventListener('mousemove', function(evt) {
+    var mousePos = getMousePos(evt);
+    cardData.forEach(function (card, index) {
+      if (mousePos.x > cardPos[index].x && mousePos.x < cardPos[index].x + cardSize.width) {
+        if (mousePos.y > cardPos[index].y && mousePos.y < cardPos[index].y + cardSize.height) {
+          dirty = true;
+          card.hovered = true;
+          return;
+        }
+      }
+      if (card.hovered) {
+        dirty = true;
+        card.hovered = false;
+      }
+    });
+    render();
+  }, false);
+
+  canvas.addEventListener('click', function (evt) {
+    var mousePos = getMousePos(evt);
+    cardData.forEach(function (card, index) {
+      if (mousePos.x > cardPos[index].x && mousePos.x < cardPos[index].x + cardSize.width) {
+        if (mousePos.y > cardPos[index].y && mousePos.y < cardPos[index].y + cardSize.height) {
+          dirty = true;
+          card.selected = !card.selected;
+          return;
+        }
+      }
+    });
+    render();
+  }, false);
+}
+
+function getCards() {
+  get_info("/cards", function(cardData) {
+    if (cardData.length > 0) {
+      setCardData(cardData);
+      dirty = true;
+      render();
+    } else {
+      console.log("click new game");
+      displayStatus("click new game");
+    }
+  });
+}
+
+function setCardData(data) {
+  arr = [];
+  data.forEach(function (num) {
+    arr.push({
+      n: num,
+      r: (num & 32) == 32,
+      o: (num & 16) == 16,
+      y: (num &  8) ==  8,
+      g: (num &  4) ==  4,
+      b: (num &  2) ==  2,
+      v: (num &  1) ==  1,
+      hovered: false,
+      selected: false,
+    });
+  });
+  cardData = arr;
+}
+
+function displayStatus(str, len) {
+  if (len) {
+    setTimeout(function () {
+      statusMessage = "";
+      dirty = true;
+      render();
+    },len * 1000);
+  }
+
+  statusMessage = str;
+  dirty = true;
+  render();
+}
+
+function render() {
+  if (!dirty) return;
+  ctx.clearRect(0,0,800,600);
+  if (!!statusMessage) {
+    var old_font = ctx.font;
+    var old_fill = ctx.fillStyle;
+    ctx.font="20px Georgia";
+    ctx.fillStyle = "#000000";
+    ctx.fillText(statusMessage,600,550);
+    ctx.font = old_font;
+    ctx.fillStyle = old_fill;
+  }
+  cardData.forEach(function(card, index) {
+    var pos = cardPos[index];
+    var old_stroke = ctx.strokeStyle;
+    var old_fill = ctx.fillStyle;
+    if (card.hovered) {
+      ctx.strokeStyle = colors.hover.c;
+    }
+    if (card.selected) {
+      ctx.fillStyle = colors.select.c;
+    } else {
+      ctx.fillStyle = colors.unselect.c;
+    }
+    ctx.fillRect(pos.x, pos.y, cardSize.width, cardSize.height);
+    ctx.strokeRect(pos.x, pos.y, cardSize.width, cardSize.height);
+    ctx.strokeStyle = old_stroke;
+    ctx.fillgStyle = old_stroke;
+    ["r","o","y","g","b","v"].forEach(function (col) {
+      if (card[col]) {
+        var c = colors[col];
+        var x = pos.x + c.x + 14;
+        var y = pos.y + c.y + 14;
+        c = c.c;
+        var old = ctx.fillStyle;
+        ctx.fillStyle = c;
+        ctx.beginPath();
+        ctx.arc(x,y,14,0,2*Math.PI);
+        ctx.fill();
+        ctx.fillStyle = old;
+      }
+    });
+  });
+  dirty = false;
+}
+
+function get_info(endpoint, callback) {
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', encodeURI(endpoint));
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      var data = JSON.parse(xhr.responseText);
+      callback(data);
+    }
+    else {
+      alert('Request to ' + endpoint + ' failed.  Returned status of ' + xhr.status);
+    }
+  };
+  xhr.send();
+}
+
+function post_info(endpoint, data, callback) {
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', encodeURI(endpoint));
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      callback(JSON.parse(xhr.responseText));
+    } else {
+      console.log("error");
+      console.log(xhr.responseText);
+    }
+  };
+  xhr.send(JSON.stringify(data));
+}
+    </script>
+  </body>
+</html>
