@@ -2,7 +2,7 @@ Projective Set
 ==============
 The goal of the game is to find the set of 3-7 cards that, when added up, contain an even number of each color of dot.
 
-Check out [the wiki][1] for more info.
+Check out [the Wikipedia page][1] for more info.
 
 ## Running
 You should be able to use `cargo run`. It listens by default on port `3000`.
