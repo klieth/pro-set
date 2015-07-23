@@ -148,11 +148,10 @@ function setupMouse(canvas) {
 
 function getCards() {
   get_info("/cards", function(cardData) {
-    if (cardData.length > 0) {
-      setCardData(cardData);
-      dirty = true;
-      render();
-    } else {
+    setCardData(cardData);
+    dirty = true;
+    render();
+    if (cardData.length == 0) {
       console.log("click new game");
       displayStatus("click new game");
     }

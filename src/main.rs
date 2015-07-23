@@ -135,7 +135,7 @@ fn main() {
         println!("getting notify lock");
         let n_lock = try!(req.get::<State<NotifyLocks>>().map_err(|e| IronError::new(e, format!("ERROR couldn't get n_lock"))) );
         let mut notify_locks = n_lock.write().unwrap();
-        println!("got");
+        println!("got it");
         // grab body
         let mut body = String::new();
         req.body.read_to_string(&mut body);
@@ -163,15 +163,6 @@ fn main() {
                     Err(e) => println!("couldn't send: {}", e),
                 }
             }
-            /*
-            for notify in notify_locks.iter() {
-                let tx = notify.lock().unwrap();
-                match tx.send(cards.clone()) {
-                    Ok(_) => println!("sent"),
-                    Err(e) => println!("couldn't send: {}", e),
-                }
-            }
-            */
         }
         let sr = SubmitResponse { ok : true, msg : format!("was a match: {}", xor == 0), success : Some(xor == 0) };
         let sr = json::encode(&sr).unwrap();
