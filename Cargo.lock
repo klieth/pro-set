@@ -6,7 +6,7 @@ dependencies = [
  "hyper 0.6.4 (registry+https://github.com/rust-lang/crates.io-index)",
  "iron 0.1.20 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "persistent 0.0.6 (git+https://github.com/klieth/persistent?rev=8c7aab8669434198f411c9ae9a7874babdd717b9)",
+ "persistent 0.0.6 (git+https://github.com/klieth/persistent?rev=76459b1fd5eea596a56f678c9253898e5e68c45e)",
  "rand 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "router 0.0.10 (registry+https://github.com/rust-lang/crates.io-index)",
  "rustc-serialize 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -201,7 +201,7 @@ dependencies = [
 [[package]]
 name = "persistent"
 version = "0.0.6"
-source = "git+https://github.com/klieth/persistent?rev=8c7aab8669434198f411c9ae9a7874babdd717b9#8c7aab8669434198f411c9ae9a7874babdd717b9"
+source = "git+https://github.com/klieth/persistent?rev=76459b1fd5eea596a56f678c9253898e5e68c45e#76459b1fd5eea596a56f678c9253898e5e68c45e"
 dependencies = [
  "iron 0.1.20 (registry+https://github.com/rust-lang/crates.io-index)",
  "plugin 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",

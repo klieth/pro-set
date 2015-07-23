@@ -3,7 +3,7 @@
     <title>Projective Set</title>
   </head>
   <body onload="start()">
-    <canvas id="game" width="800" height="600">
+    <canvas style="background-color: #D1D1D1;" id="game" width="800" height="600">
       Your browser doesn't support this game.
     </canvas>
     <button onclick="newGame()">New Game</button>
@@ -34,9 +34,10 @@ var colors = {
   g: { c: "#00FF00", x: 46, y: 44},
   b: { c: "#0000FF", x:  9, y: 80},
   v: { c: "#8A2BE2", x: 46, y: 80},
+  circle: { c: "#000000" },
   hover:  { c: "#D3212D" },
-  select: { c: "#AAAAAA" },
-  unselect: { c: "#FFFFFF" },
+  select: { c: "#FFFFFF" },
+  unselect: { c: "#D1D1D1" },
 };
 
 function start() {
@@ -224,12 +225,18 @@ function render() {
         var x = pos.x + c.x + 14;
         var y = pos.y + c.y + 14;
         c = c.c;
-        var old = ctx.fillStyle;
+        var old_fill = ctx.fillStyle;
+        var old_stroke = ctx.strokeStyle;
         ctx.fillStyle = c;
+        ctx.strokeStyle = colors.circle;
         ctx.beginPath();
         ctx.arc(x,y,14,0,2*Math.PI);
         ctx.fill();
-        ctx.fillStyle = old;
+        ctx.beginPath();
+        ctx.arc(x,y,14,0,2*Math.PI);
+        ctx.stroke();
+        ctx.fillStyle = old_fill;
+        ctx.strokeStyle = old_stroke;
       }
     });
   });
