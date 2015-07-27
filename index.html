@@ -71,6 +71,7 @@ function newGame() {
   get_info("/new", function(result) {
     if (result.ok) {
       getCards();
+      displayStatus("");
     } else {
       alert("Creating new game failed");
     }
