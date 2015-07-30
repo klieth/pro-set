@@ -143,6 +143,12 @@ function setupMouse(canvas) {
         }
       }
     });
+    if (!dirty) { // no card was selected
+      dirty = true;
+      cardData.forEach(function (card) {
+        card.selected = false;
+      });
+    }
     render();
   }, false);
 }
