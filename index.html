@@ -12,7 +12,6 @@
 
 var ctx = null;
 var dirty = true;
-var statusMessage = "";
 var cardData = [];
 var cardSize = {
   width: 80,
@@ -56,7 +55,7 @@ function pollUpdates() {
   console.log("starting to poll...");
   get_info("/update", function(res) {
     if (res.update) {
-      displayStatus("Set found! Updating...", 3);
+      log("Set found! Updating...", 3);
       getCards();
     } else {
       console.log("nothing to update");
@@ -71,7 +70,7 @@ function newGame() {
   get_info("/new", function(result) {
     if (result.ok) {
       getCards();
-      displayStatus("");
+      log("started new game");
     } else {
       alert("Creating new game failed");
     }
@@ -95,10 +94,10 @@ function submit() {
       console.log(result.msg);
     }
     if (result.success) {
-      displayStatus("correct set", 5);
+      log("correct", 5);
       getCards();
     } else {
-      displayStatus("not a set!",3);
+      log("incorrect",3);
       console.log("Incorrect set");
       console.log(result.msg);
     }
@@ -160,7 +159,7 @@ function getCards() {
     render();
     if (cardData.length == 0) {
       console.log("click new game");
-      displayStatus("click new game");
+      log("click new game");
     }
   });
 }
@@ -183,29 +182,39 @@ function setCardData(data) {
   cardData = arr;
 }
 
-function displayStatus(str, len) {
-  if (len) {
-    setTimeout(function () {
-      statusMessage = "";
-      dirty = true;
-      render();
-    },len * 1000);
-  }
-
-  statusMessage = str;
+var logsInfo = {
+  age : 6000,
+  logs : [],
+  colors : {
+    major: "#000000",
+    minor: "#555555",
+  },
+}
+function log(str) {
+  var l = logsInfo.logs;
+  l.unshift(str);
   dirty = true;
   render();
+  // clean up old logs
+  if (l[1]) {
+    setTimeout(function() { l.pop(); dirty = true; render(); }, logsInfo.age);
+  }
 }
 
 function render() {
   if (!dirty) return;
   ctx.clearRect(0,0,800,600);
-  if (!!statusMessage) {
+  if (logsInfo.logs.length) {
     var old_font = ctx.font;
     var old_fill = ctx.fillStyle;
     ctx.font="20px Georgia";
-    ctx.fillStyle = "#000000";
-    ctx.fillText(statusMessage,600,550);
+    logsInfo.logs.forEach(function (msg, i) {
+      if (i == 0) ctx.fillStyle = logsInfo.colors.major;
+      else ctx.fillStyle = logsInfo.colors.minor;
+      var y = 590 - i * 25;
+      if (y > 0) ctx.fillText(msg, 600, y);
+    });
+    ctx.fillText(">", 580, 590);
     ctx.font = old_font;
     ctx.fillStyle = old_fill;
   }
