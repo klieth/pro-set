@@ -55,7 +55,7 @@ function pollUpdates() {
   console.log("starting to poll...");
   get_info("/update", function(res) {
     if (res.update) {
-      log("Set found! Updating...", 3);
+      log("Set found! Updating...");
       getCards();
     } else {
       console.log("nothing to update");
@@ -90,16 +90,14 @@ function submit() {
   console.log("sending", cards);
   post_info("/submit", cards, function(result) {
     if (!result.ok) {
-      console.log("Error checking set");
-      console.log(result.msg);
+      log("Error checking set");
+      log(result.msg);
     }
     if (result.success) {
-      log("correct", 5);
+      log("correct");
       getCards();
     } else {
-      log("incorrect",3);
-      console.log("Incorrect set");
-      console.log(result.msg);
+      log("incorrect");
     }
   });
 }
@@ -154,9 +152,11 @@ function setupMouse(canvas) {
 
 function getCards() {
   get_info("/cards", function(cardData) {
-    setCardData(cardData);
-    dirty = true;
-    render();
+    if (cardData.length) {
+      setCardData(cardData);
+      dirty = true;
+      render();
+    }
     if (cardData.length == 0) {
       console.log("click new game");
       log("click new game");
