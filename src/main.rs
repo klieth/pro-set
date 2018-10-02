@@ -1,20 +1,19 @@
+extern crate chrono;
 extern crate fern;
 extern crate hyper;
 extern crate iron;
-#[macro_use]
 extern crate log;
 extern crate persistent;
 extern crate rand;
 extern crate router;
 extern crate rustc_serialize;
-extern crate time;
 
 use iron::{Iron,Request,Response,IronResult,IronError,status,Plugin,Chain};
 use iron::mime::Mime;
 use iron::typemap::Key;
 use persistent::State;
 use router::Router;
-use rand::distributions::{IndependentSample,Range};
+use rand::distributions::{Distribution,Uniform};
 use rustc_serialize::json;
 use rustc_serialize::json::Json;
 use std::io::prelude::*;
@@ -50,17 +49,26 @@ impl Key for NotifyLocks {
     type Value = Vec<Arc<Mutex<Sender<Vec<u8>>>>>;
 }
 
+fn setup_logger() -> Result<(), fern::InitError> {
+    fern::Dispatch::new()
+        .format(|out, message, record| {
+            out.finish(format_args!(
+                "{}[{}][{}] {}",
+                chrono::Local::now().format("[%Y-%m-%d][%H:%M:%S]"),
+                record.target(),
+                record.level(),
+                message
+            ))
+        })
+        .level(log::LevelFilter::Debug)
+        .chain(std::io::stdout())
+        .chain(fern::log_file("output.log")?)
+        .apply()?;
+    Ok(())
+}
+
 fn main() {
-    let logger_config = fern::DispatchConfig {
-        format: Box::new(|msg: &str, level: &log::LogLevel, _location: &log::LogLocation| {
-            format!("[{}][{}] {}", time::now().strftime("%Y-%m-%d][%H:%M:%S").unwrap(), level, msg)
-        }),
-        output: vec![fern::OutputConfig::file("out.log")],
-        level: log::LogLevelFilter::Trace,
-    };
-    if let Err(e) = fern::init_global_logger(logger_config, log::LogLevelFilter::Trace) {
-        panic!("failed to initialize global logger: {}", e);
-    }
+    setup_logger().unwrap();
 
     let card_data = State::<CardData>::both(Vec::new());
     let deck_data = State::<DeckData>::both( (1..64).collect() );
@@ -83,18 +91,18 @@ fn main() {
     c_update.link(notify_locks.clone());
 
     let mut router = Router::new();
-    router.get("/", index);
-    router.get("/new", c_new_game);
-    router.get("/cards", c_cards);
-    router.post("/submit", c_submit);
-    router.get("/update", c_update);
+    router.get("/", index, "index");
+    router.get("/new", c_new_game, "new_game");
+    router.get("/cards", c_cards, "cards");
+    router.post("/submit", c_submit, "submit");
+    router.get("/update", c_update, "update");
 
     Iron::new(router).http("0.0.0.0:3000").unwrap();
 
     fn draw_card(deck: &mut Vec<u8>) -> u8 {
-        let between = Range::new(0, deck.len());
+        let between = Uniform::new(0, deck.len());
         let mut rng = rand::thread_rng();
-        deck.remove( between.ind_sample(&mut rng) )
+        deck.remove( between.sample(&mut rng) )
     };
 
     fn index(_: &mut Request) -> IronResult<Response> {
@@ -113,7 +121,7 @@ fn main() {
         // TODO send notify with empty card list
         *card_data = Vec::new();
         *deck_data = (1..64).collect();
-        for _ in (0..7) {
+        for _ in 0..7 {
             card_data.push(draw_card(&mut deck_data));
         }
         Ok( Response::with( (status::Ok, "{\"ok\":true}") ) )
@@ -138,7 +146,7 @@ fn main() {
         println!("got it");
         // grab body
         let mut body = String::new();
-        req.body.read_to_string(&mut body);
+        req.body.read_to_string(&mut body).map_err(|e| IronError::new(e, iron::status::BadRequest))?;
         let cards = Json::from_str(&body).unwrap();
         let cards = cards.as_array().unwrap();
         let cards : Vec<u8> = cards.iter().map(|c| c.as_u64().unwrap() as u8).collect();
