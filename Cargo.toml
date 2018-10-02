@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Kai Lieth <dubokk15@gmail.com>"]
 
 [dependencies]
+chrono = "*"
 fern = "*"
 hyper = "*"
 iron = "*"
@@ -11,7 +12,6 @@ log = "*"
 rand = "*"
 router = "*"
 rustc-serialize = "*"
-time = "*"
 
 [dependencies.persistent]
 git = "https://github.com/klieth/persistent" 
