@@ -42,7 +42,7 @@ function start() {
 function pollUpdates() {
   console.log("starting to poll...");
   get_info("/update", function(res) {
-    if (res.update) {
+    if (res) {
       log("Set found! Updating...");
       getCards();
     } else {

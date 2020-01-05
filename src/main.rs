@@ -15,7 +15,7 @@ use rocket_contrib::{
     json::{
         Json,
         JsonValue,
-        serde::{Serialize, Deserialize},
+        serde::Serialize,
     },
     serve::StaticFiles,
 };
@@ -55,16 +55,8 @@ fn cards(game_state: State<GameState>) -> Json<Vec<u8>> {
     Json(cards.clone())
 }
 
-// TODO: the Option should make the cards array nil in the json, so we don't need the "update"
-// parameter. Or maybe it should only return a bool and call the /cards endpoint for the new cards?
-#[derive(Serialize, Deserialize)]
-struct UpdateMessage {
-    update: bool,
-    cards: Option<Vec<u8>>,
-}
-
 #[get("/update")]
-fn update(game_state: State<GameState>) -> Json<UpdateMessage> {
+fn update(game_state: State<GameState>) -> Json<bool> {
     let (tx, rx) = mpsc::channel();
 
     {
@@ -72,15 +64,12 @@ fn update(game_state: State<GameState>) -> Json<UpdateMessage> {
         notifies.push(tx);
     }
 
-    let res = if let Err(e) = rx.recv() {
+    if let Err(e) = rx.recv() {
         println!("Error unlocking: {}", e);
-        UpdateMessage { update: false, cards: None }
+        Json(false)
     } else {
-        let cards = game_state.cards.lock().unwrap();
-        UpdateMessage { update: true, cards: Some(cards.clone()) }
-    };
-
-    Json(res)
+        Json(true)
+    }
 }
 
 #[get("/new")]
