@@ -1,18 +1,11 @@
 [package]
 name = "proset"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Kai Lieth <dubokk15@gmail.com>"]
+edition = "2018"
 
 [dependencies]
-chrono = "*"
-fern = "*"
-hyper = "*"
-iron = "*"
-log = "*"
 rand = "*"
-router = "*"
-rustc-serialize = "*"
-
-[dependencies.persistent]
-git = "https://github.com/klieth/persistent" 
-rev = "76459b1fd5eea596a56f678c9253898e5e68c45e"
+rocket = { path = "../../SergioBenitez/Rocket/core/lib" }
+rocket_contrib = { path = "../../SergioBenitez/Rocket/contrib/lib" }
+serde = "*"

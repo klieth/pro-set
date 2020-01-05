@@ -1,15 +1,3 @@
-<html>
-  <head>
-    <title>Projective Set</title>
-  </head>
-  <body onload="start()">
-    <canvas style="background-color: #D1D1D1;" id="game" width="800" height="600">
-      Your browser doesn't support this game.
-    </canvas>
-    <button onclick="newGame()">New Game</button>
-    <button onclick="submit()">Submit</button>
-    <script>
-
 var ctx = null;
 var dirty = true;
 var cardData = [];
@@ -152,15 +140,13 @@ function setupMouse(canvas) {
 
 function getCards() {
   get_info("/cards", function(cardData) {
-    if (cardData.length) {
-      setCardData(cardData);
-      dirty = true;
-      render();
-    }
     if (cardData.length == 0) {
       console.log("click new game");
       log("click new game");
     }
+    setCardData(cardData);
+    dirty = true;
+    render();
   });
 }
 
@@ -259,33 +245,22 @@ function render() {
 }
 
 function get_info(endpoint, callback) {
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', encodeURI(endpoint));
-  xhr.onload = function() {
-    if (xhr.status === 200) {
-      var data = JSON.parse(xhr.responseText);
-      callback(data);
-    }
-    else {
-      alert('Request to ' + endpoint + ' failed.  Returned status of ' + xhr.status);
-    }
-  };
-  xhr.send();
+  fetch(encodeURI(endpoint), {
+    method: "GET",
+  }).then((response) => response.json())
+    .then((data) => callback(data))
+    .catch((error) => console.log('Error:', error))
 }
 
 function post_info(endpoint, data, callback) {
-  var xhr = new XMLHttpRequest();
-  xhr.open('POST', encodeURI(endpoint));
-  xhr.onload = function() {
-    if (xhr.status === 200) {
-      callback(JSON.parse(xhr.responseText));
-    } else {
-      console.log("error");
-      console.log(xhr.responseText);
-    }
-  };
-  xhr.send(JSON.stringify(data));
+  fetch(endpoint, {
+    method: "POST",
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  }).then((response) => response.json())
+    .then((data) => callback(data))
+    .catch((error) => console.log('Error:', error))
 }
-    </script>
-  </body>
-</html>
+    
