@@ -77,11 +77,10 @@ function submit() {
   render();
   console.log("sending", cards);
   post_info("/submit", cards, function(result) {
-    if (!result.ok) {
+    if (result.success === null) {
       log("Error checking set");
       log(result.msg);
-    }
-    if (result.success) {
+    } else if (result.success) {
       log("correct");
       getCards();
     } else {

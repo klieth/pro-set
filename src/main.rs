@@ -6,10 +6,6 @@
 #[macro_use] extern crate rocket_contrib;
 
 use rand::{
-    distributions::{
-        Distribution,
-        Uniform,
-    },
     seq::SliceRandom,
 };
 use rocket::{
@@ -96,17 +92,24 @@ fn new(game_state: State<GameState>) -> JsonValue {
     json!({ "ok": true })
 }
 
-// TODO: use Optional to imply null instead of storing ok value
 #[derive(Serialize)]
 struct SubmitResponse {
-    ok: bool, // true => success, false => error
     msg: String,
     success: Option<bool>, // None when ok is false
 }
 
 #[post("/submit", format = "application/json", data = "<submitted>")]
 fn submit(submitted: Json<Vec<u8>>, game_state: State<GameState>) -> Json<SubmitResponse> {
-    // TODO: check if cards are in hand
+    {
+        let cards = game_state.cards.lock().unwrap();
+        if !submitted.iter().all(|c| cards.contains(c)) {
+            return Json(SubmitResponse {
+                msg: "Card submitted was not in dealt hand".to_string(),
+                success: None,
+            });
+        }
+    }
+
     let xor = submitted.iter().fold(0, |acc, card| acc ^ card);
     println!("xor of {:?} is {}", *submitted, xor);
 
@@ -125,7 +128,6 @@ fn submit(submitted: Json<Vec<u8>>, game_state: State<GameState>) -> Json<Submit
             for tx in notify.drain(..) {
                 if let Err(e) = tx.send(()) {
                     return Json(SubmitResponse {
-                        ok: false,
                         msg: format!("Notifies failed: {:?}", e),
                         success: None,
                     });
@@ -134,13 +136,11 @@ fn submit(submitted: Json<Vec<u8>>, game_state: State<GameState>) -> Json<Submit
         }
 
         Json(SubmitResponse {
-            ok: true,
             msg: "was a match!".to_string(),
             success: Some(true),
         })
     } else {
         Json(SubmitResponse {
-            ok: true,
             msg: "not a match".to_string(),
             success: Some(false),
         })
